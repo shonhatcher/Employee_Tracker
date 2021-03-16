@@ -2,6 +2,9 @@ const mysql = require('mysql');
 const inquirer = require('inquirer');
 const cTable = require('console.table');
 
+var choiceArrayOne = [];
+var choiceArray = [];
+
 const connection = mysql.createConnection({
   host: 'localhost',
 
@@ -37,7 +40,10 @@ const start = () => {
     .then((answer) => {
       if (answer.addUpdateDelete === 'Add') {
         addData();
-      } else {console.log('We stil are adding to this code')
+      } else if (answer.addUpdateDelete === 'View') {
+        viewData();
+      } else {
+          updateData();
       };
     });
 };
@@ -65,7 +71,11 @@ const addData = () => {
 
 
 const addEmployee = () => {
-    connection.query('SELECT * FROM employee', (err, results) => {
+    //let query = 'SELECT employee.role_id, employee.manager_id FROM employee'
+    // let query = 'SELECT employee_role.id, employee_role.title FROM employee_role ORDER BY title ASC'
+        let query = 'SELECT employee.first_name, employee.last_name, employee_role.title,employee.id FROM employee Left join employee_role ON employee.role_id = employee_role.id'
+
+    connection.query(query, (err, results) => {
         if (err) throw err;
         inquirer
             .prompt([
@@ -83,21 +93,23 @@ const addEmployee = () => {
                     name: 'employeeRoleID',
                     type: 'rawlist',
                     choices: () => {
-                        const choiceArrayOne = [];
-                        results.forEach(({role_id}) => {
-                        choiceArrayOne.push(role_id);
-                     });
+                       // var choiceArrayOne = [];
+                        results.forEach(({title}) => {
+                            choiceArrayOne.push(title);                    
+                        });
                     return choiceArrayOne;
                     },
                     message: 'What is the role of the employee?',
                 },
+
+               
                 {
                     name: 'employeeManagerID',
                     type: 'rawlist',
                     choices: () => {
-                        const choiceArray = [];
-                        results.forEach(({ manager_id}) => {
-                        choiceArray.push(manager_id);
+                    
+                        results.forEach(({first_name}) => {
+                        choiceArray.push(first_name);
                      });
                     return choiceArray;
                     },
@@ -105,13 +117,29 @@ const addEmployee = () => {
                 },
             ])
             .then((answer) => {
+
+                var employeeRoleIDConverted;
+                var managerIDConverted;
+               //console.log(choiceArrayOne.indexOf(`${answer.employeeRoleID}`));
+               employeeRoleIDConverted = choiceArrayOne.indexOf(`${answer.employeeRoleID}`);
+               managerIDConverted = choiceArray.indexOf(`${answer.employeeManagerID}`);
+               
+                //console.log(`${answer.employeeRoleID}`);
+                // let employeeID;
+                // for (i = 0; i<answer.employeeRoleID.length; i++) {
+                //     if(answer.employeeRoleID == choiceArrayOne) {
+                //         employeeID = choiceArrayOne[i];
+                //         console.log(employeeID);
+                //     }
+                // }
                 connection.query (
                     'INSERT INTO employee SET ?',
                     {
                         first_name: answer.employeeFirstName,
                         last_name: answer.employeeLastName,
-                        role_id: answer.employeeRoleID,
-                        manager_id: answer.employeeManagerID,
+                        role_id: employeeRoleIDConverted,
+                        manager_id: managerIDConverted,
+                      //  manager_id: answer.employeeManagerID,
                     }
                 )
                 askAgain();
@@ -119,6 +147,41 @@ const addEmployee = () => {
     })
 }
 
+// const employeeManagerID = () => {
+//     let query = 'SELECT id, first_name,last_name, manager_id FROM employee'
+
+//     connection.query(query, (err, results) => {
+//         if (err) throw err;
+//         inquirer
+//             .prompt([
+//                 {
+//                     name: 'employeeManagerID',
+//                     type: 'rawlist',
+//                     choices: () => {
+//                       //  const choiceArray = [];
+//                         results.forEach(({first_name}) => {
+//                         choiceArray.push(first_name);
+//                         });
+//                     return choiceArray;
+//                     },
+//                     message: 'Who is the manager of the employee',
+//                 },
+//             ])
+//             .then ((answer) =>{
+//                 var employeeRoleIDConvertedTwo;
+//                 //console.log(choiceArray.indexOf(`${answer.employeeManagerID}`));
+//                 employeeRoleIDConvertedTwo = choiceArray.indexOf(`${answer.employeeManagerID}`);
+//                 connection.query (
+//                     'UPDATE INTO employee SET ? WHERE ?',
+//                     {
+//                        manager_id: employeeRoleIDConvertedTwo,
+//                        first_name: `${first_name}`, 
+
+//                     } 
+//                 )
+//             });
+//     });
+// };    
 
 const askAgain = () => {
     inquirer
@@ -150,6 +213,8 @@ const askAgain = () => {
         ])
         .then((answer) =>{
             connection.query(
+                'Select * FROM department',
+                //if(answer === )
                 'INSERT INTO department SET ?',
                 {
                   name: answer.departmentAddition
@@ -160,6 +225,8 @@ const askAgain = () => {
 };
 
 const addRole = () => {
+    connection.query('SELECT * FROM employee_role Inner Join department ON employee_role.department_id = department.id', (err, results) => {
+        if (err) throw err;
     inquirer
         .prompt([
             {
@@ -171,6 +238,26 @@ const addRole = () => {
                 name:'roleSalary',
                 type: 'number',
                 message: 'What is the salary?'
+            },
+            {
+                name: 'departmentName',
+                type: 'rawlist',
+                choices: () => {
+                    const choiceArray = [];
+                    results.forEach(({department_id}) => {
+                    choiceArray.push(department_id);
+                });
+                
+                //converts display to show words, however, need to return a numerical value
+
+                //     results.forEach(({name}) => {
+                //         if (!choiceArrayTwo.includes({name})) {
+                //             choiceArrayTwo.push({name});
+                //         }
+                //  });
+                return choiceArray;
+                },
+                message: 'What department is this role in?'
             }
         ])
         .then((answer) =>{
@@ -178,11 +265,88 @@ const addRole = () => {
                 'INSERT INTO employee_role SET ?',
                 {
                   title: answer.roleAddition,
-                  salary: answer.roleSalary
+                  salary: answer.roleSalary,
+                  department_id: answer.departmentName
                 },
             )
             askAgain();        
         })
+    });
+};
+
+
+const viewData = () => {
+    inquirer
+        .prompt([
+            {
+                name: 'viewDataChoice',
+                type: 'list',
+                message: 'What data would you like to view?',
+                choices: ['View Departments', 'View Roles', 'View Employees']
+            }
+        ])
+        .then((answers) => {
+            if(answers.viewDataChoice === 'View Departments') {
+                viewDepartments();
+            } else if (answers.viewDataChoice == 'View Roles') {
+                viewRoles();
+            } else {
+                viewEmployees();
+            }
+            askAgain();
+        });  
+};
+
+const viewDepartments = () => {
+        let query = 'Select name FROM department'
+        // Query from connection
+        connection.query(query, function(err, res) {
+            if(err) return err;
+            console.log("\n");
+            // Display query results using console.table
+            console.table(res);
+        });
+     //   askAgain();
+};
+
+const viewRoles = () => {
+    let query = 'Select title FROM employee_role'
+        // Query from connection
+        connection.query(query, function(err, res) {
+            if(err) return err;
+            console.log("\n");
+            // Display query results using console.table
+            console.table(res);
+        });
+       // askAgain();
+};
+
+const viewEmployees = () => {
+    let query = 'Select first_name,last_name FROM employee'
+    // Query from connection
+    connection.query(query, function(err, res) {
+        if(err) return err;
+        console.log("\n");
+        // Display query results using console.table
+        console.table(res);
+    });
+}
+
+
+const updateData = () =>{
+    connection.query('SELECT * FROM employee_role Inner Join department ON employee_role.department_id = department.id', (err, results) => {
+        if (err) throw err;
+    inquirer
+        .prompt([
+            {
+                name: 'updateDataChoice',
+                type: 'list',
+                message: 'Which employee would you like to update his/her role?',
+                Choices: ['still trying to figure this out']
+
+            }
+        ]);
+    });
 };
 
 // connect to the mysql server and sql database

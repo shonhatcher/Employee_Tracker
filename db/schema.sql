@@ -6,16 +6,18 @@ USE company_DB;
 CREATE TABLE department (
  id INT NOT NULL AUTO_INCREMENT,
  name VARCHAR(30) NOT NULL,
+ CONSTRAINT unique_name UNIQUE(name),
  PRIMARY KEY (id)
 );
 
 CREATE TABLE employee_role (
 id INT NOT NULL AUTO_INCREMENT,
 title VARCHAR(30) NOT NULL,
-salary DECIMAL(8,2) NOT NULL,
+salary DECIMAL NOT NULL,
 department_id INTEGER NOT NULL,
 PRIMARY KEY (id),
-FOREIGN KEY (department_id) REFERENCES department (id)
+FOREIGN KEY (department_id) REFERENCES department (id),
+CONSTRAINT unique_role UNIQUE (title)
 );
 
 CREATE TABLE employee(
@@ -23,7 +25,7 @@ CREATE TABLE employee(
   first_name VARCHAR(30) NOT NULL,
   last_name VARCHAR(30) NOT NULL,
   role_id INTEGER NOT NULL,
-  manager_id INTEGER,
+  manager_id INTEGER DEFAULT 0,
   PRIMARY KEY (id),
   FOREIGN KEY (role_id) REFERENCES employee_role (id),
   FOREIGN KEY (manager_id) REFERENCES employee (id)
