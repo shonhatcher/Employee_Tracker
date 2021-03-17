@@ -1,6 +1,6 @@
 USE company_DB;
 
-INSERT INTO department (name)
+INSERT INTO department (dept_name)
 VALUES ("Forecasting"),("Operations"), ("Marketing"), ("Sales"), ("Fleet Management");
 
 INSERT INTO employee_role (title,salary,department_id)

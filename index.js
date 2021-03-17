@@ -322,7 +322,7 @@ const viewRoles = () => {
 };
 
 const viewEmployees = () => {
-    let query = 'Select first_name,last_name FROM employee'
+    let query = 'Select employee.first_name, employee.last_name FROM employee'
     // Query from connection
     connection.query(query, function(err, res) {
         if(err) return err;
@@ -334,20 +334,39 @@ const viewEmployees = () => {
 
 
 const updateData = () =>{
-    connection.query('SELECT * FROM employee_role Inner Join department ON employee_role.department_id = department.id', (err, results) => {
+    connection.query('SELECT employee.id, employee.first_name, employee.last_name, employee.role_id, employee_role.id,employee_role.department_id, department.dept_name, department.id FROM employee INNER JOIN employee_role ON employee.role_id = employee_role.id INNER JOIN department ON department.id = employee_role.department_id', 
+    (err, results) => {
         if (err) throw err;
     inquirer
         .prompt([
             {
                 name: 'updateDataChoice',
-                type: 'list',
-                message: 'Which employee would you like to update his/her role?',
-                Choices: ['still trying to figure this out']
-
-            }
-        ]);
+                type: 'rawlist',
+                choices: () => {
+                    const choiceArrayThree = [];
+                    results.forEach(({first_name}) => {
+                    choiceArrayThree.push(first_name);
+                    });
+                return choiceArrayThree; 
+                },
+                message: 'Which employee would you like to update his/her role?'
+            }    
+        ])
+        .then((answers) => {
+            connection.query(
+                'UPDATE INTO department SET ?',
+                {
+                  dept_name: answer.UpdateDataChoice
+                  
+                }
+            )
+            askAgain();   
+        })
     });
-};
+}; 
+
+
+
 
 // connect to the mysql server and sql database
 connection.connect((err) => {
@@ -355,3 +374,5 @@ connection.connect((err) => {
     // run the start function after the connection is made to prompt the user
     start();
   });
+
+

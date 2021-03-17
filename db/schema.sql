@@ -5,8 +5,8 @@ USE company_DB;
 
 CREATE TABLE department (
  id INT NOT NULL AUTO_INCREMENT,
- name VARCHAR(30) NOT NULL,
- CONSTRAINT unique_name UNIQUE(name),
+ dept_name VARCHAR(30) NOT NULL,
+ CONSTRAINT unique_name UNIQUE(dept_name),
  PRIMARY KEY (id)
 );
 
